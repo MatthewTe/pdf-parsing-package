@@ -53,7 +53,7 @@ class pdf(p2.PdfFileReader):
 
         # Calling the pop_destination_lst() method to populate the self.pop_destination_lst:
         self.pop_destination_lst(self.getOutlines(), counter=0)
-        print(self.destination_lst)
+        #print(self.destination_lst)
 
         # Calling self.build_toc:
         self.build_toc(self.destination_lst)
@@ -126,51 +126,73 @@ class pdf(p2.PdfFileReader):
 
         #print(self.getNumPages())
 
-        # Defining a copy of the self.destination_lst to manipulate:
-        dest_lst_cpy = self.destination_lst
-
-        # Defining new list to store all the newly modified destination dicts:
-        orderd_destination_lst = []
-
-        # Counter variable to dictate at what level of the nest the loop operates:
-        nest_level = max(unique_nest_vals) # lowest level in nest is highest num.
-
-        # Itterating through each level of the nest:
-        for element in unique_nest_vals:
-
-            # Itterating through the destiation list based on nest level:
-            for dict in dest_lst_cpy:
-
-                # Only itterates through elements at the specified nest level:
-                if dict['Nested_level'] == nest_level:
-
-                    # Tracking list position of dict:
-                    dict_loc = dest_lst_cpy.index(dict)
-
-                    # If dict is at lowest remaining nest level:
-                    try:
-                        End_Page = dest_lst_cpy[dict_loc + 1]['Start_Page']
-                    except:
-                        End_Page = self.getNumPages()
-                        
-                    dict['End_Page'] = End_Page
-
-                    # Once dict is modified it is removed from dest_lst_cpy:
-                    # Adding it to orderd_destination_lst:
-                    orderd_destination_lst.append(dict)
-                    dest_lst_cpy.remove(dict)
+        #print(reversed(unique_nest_vals))
 
 
-                    # TODO: Fix the issues with this selection module:
-                    # Write it out on paper and complete the algorithm.
+        '# Itterating through Destinations to determine their page ranges: '
+        # Print Statements are for diagnositics & comprehension during run:
+        print('-------------------------------------------------------------')
+        print('| PDF SECTION-PAGE-RANGE-DETECTION ALGORITHM RESULTS        |')
+        print('-------------------------------------------------------------')
 
-                    print(dest_lst_cpy)
-                    print(orderd_destination_lst)
-                    print(nest_level)
+        # Itterating through each nest level beinging with the deepest level:
+        for nest_lvl in reversed(unique_nest_vals):
 
-            # Changing nest_level to operate at a shallower nest level:
-            nest_level = nest_level - 1
+            # Itterating through each dictionary in the list copy:
+            for dict in self.destination_lst:
+
+                # Defining the main dict's position in the list:
+                dict_index = self.destination_lst.index(dict)
+
+                # Using the nearest destination dict that is at the same list lvl or higer:
+                if dict['Nested_level'] == nest_lvl:
+
+                    print('CURRENT DESTINATION:', dict['Title'], 'START PAGE:',
+                    dict['Start_Page'], 'NEST LEVEL:', dict['Nested_level'])
+
+
+                    # Itterating through each destiation dict AFTER the main dict in the list:
+                    for next_dict in self.destination_lst[dict_index+1:]:
+
+                        # Conditional only performs prange algo if there is another
+                        # destiation on the same or higher nest level. If not it formats manually:
+                        if self.destination_lst.index(next_dict) == self.destination_lst.index(self.destination_lst[-1]):
+
+                            # This means that this destination occurs for rest of pdf:
+                            dict['Page_Range'] = (dict['Start_Page'], self.getNumPages())
+                            #del dict['Start_Page']
+
+                            print('ADJACENT DESTINATION:', dict['Title'],
+                            'START PAGE', dict['Start_Page'], 'NEST LEVEL:',
+                            dict['Nested_level'])
+
+                        else:
+
+                            # Only Assigns 'End_Page' variable if next_dict is on an equal or higher nest lvl:
+                            if next_dict['Nested_level'] <= nest_lvl:
+
+                                # Replacing Start_Page & End_Page dict items w/ page range tuple:
+                                dict['Page_Range'] = (dict['Start_Page'], next_dict['Start_Page'])
+                                del dict['Start_Page']
+
+                                print('ADJACENT DESTINATION:', next_dict['Title'],
+                                'START PAGE', next_dict['Start_Page'], 'NEST LEVEL:',
+                                next_dict['Nested_level'])
+
+                                break
+
+                            else:
+                                continue
+
+
+                    print(dict)
+                    print('-------------------------------------------------------------')
+
+        # TODO: Created Data type that extracts pdf pages based on destination ranges.
+
+
+
 
 
 # Test:
-pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
+pdf('tests/test_pdfs/TESLA 10-K Report 2019.pdf')
