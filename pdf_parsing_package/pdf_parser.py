@@ -6,8 +6,9 @@ from collections import Counter
 # Creating class that is meant to represent the Financial Report PDF:
 class pdf(p2.PdfFileReader):
     """
-    pdf() object contains all the methods necessary to parse a
-    10-K or 10-Q Financial Report.
+    pdf() object contains all the methods necessary to parse a pdf file and
+    produce standardized outputs that can be fed into more complex analysis
+    processes such as NLP.
 
     Critically most of the methods stored within this object are used to
     construct instance variables and as such many of the methods are called within
@@ -81,7 +82,7 @@ class pdf(p2.PdfFileReader):
 
             # Creating a new dict with only necessary variables:
             dest_dict = {'Nested_level': counter, 'Title': dest_obj.title,
-            'End_Page': dest_obj.page.idnum}
+            'Start_Page': self.getDestinationPageNumber(dest_obj)}
 
             # Adding new dict to the destiation list instance variable:
             self.destination_lst.append(dest_dict)
@@ -104,6 +105,9 @@ class pdf(p2.PdfFileReader):
         for dict in self.destination_lst:
             nest_lvl_lst.append(dict['Nested_level'])
 
+        # Creating set to extract a list containing the unique nest lvl values:
+        unique_nest_vals = list(set(nest_lvl_lst))
+
         # Counting the nests for each nest level from the nest level list:
         nest_lvl_count = Counter(nest_lvl_lst)
 
@@ -118,43 +122,55 @@ class pdf(p2.PdfFileReader):
             if dict['Nested_level'] == highest_nest_lvl:
                 highest_nest_lst.append(dict)
 
-        print(highest_nest_lst)
+        #print(highest_nest_lst)
 
-        print(self.getNumPages())
+        #print(self.getNumPages())
 
-        '''
-        # TODO: Solve issue of mismatch between actual page numbers and
-        Destination page numbers.
-        '''
-        # Nested method that parses a list of destiation dicts and gives them page ranges:
-        def get_dest_prange(nest_lst):
-            '''
-            A nested method that ingests a list of destiation dictionaries that
-            all exist on the same nest level and modifies said dictionary to
-            include:
-            - Start_Page
-            - Page_Range
+        # Defining a copy of the self.destination_lst to manipulate:
+        dest_lst_cpy = self.destination_lst
 
-            The method calculates these two variables by analyzing the 'End_Page'
-            variable of a dict and compares it to the corresponding 'End_Page'
-            variable of the dict before and after the dict in question.
+        # Defining new list to store all the newly modified destination dicts:
+        orderd_destination_lst = []
+
+        # Counter variable to dictate at what level of the nest the loop operates:
+        nest_level = max(unique_nest_vals) # lowest level in nest is highest num.
+
+        # Itterating through each level of the nest:
+        for element in unique_nest_vals:
+
+            # Itterating through the destiation list based on nest level:
+            for dict in dest_lst_cpy:
+
+                # Only itterates through elements at the specified nest level:
+                if dict['Nested_level'] == nest_level:
+
+                    # Tracking list position of dict:
+                    dict_loc = dest_lst_cpy.index(dict)
+
+                    # If dict is at lowest remaining nest level:
+                    try:
+                        End_Page = dest_lst_cpy[dict_loc + 1]['Start_Page']
+                    except:
+                        End_Page = self.getNumPages()
+                        
+                    dict['End_Page'] = End_Page
+
+                    # Once dict is modified it is removed from dest_lst_cpy:
+                    # Adding it to orderd_destination_lst:
+                    orderd_destination_lst.append(dict)
+                    dest_lst_cpy.remove(dict)
 
 
-            Parameters
-            ----------
-            nest_lst : list
-                A list of destiation dicts that all must be on the same nest
-                level.
+                    # TODO: Fix the issues with this selection module:
+                    # Write it out on paper and complete the algorithm.
 
-            Returns
-            --------
-            updated_lst : list
-                A list of destiation dicts that have been modified to include the
-                variables described above
-            '''
+                    print(dest_lst_cpy)
+                    print(orderd_destination_lst)
+                    print(nest_level)
 
-            # TODO: develop an accurate way to assign dest dicts page numbers.
-            # https://stackoverflow.com/questions/8329748/how-to-get-bookmarks-page-number
+            # Changing nest_level to operate at a shallower nest level:
+            nest_level = nest_level - 1
+
 
 # Test:
 pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
