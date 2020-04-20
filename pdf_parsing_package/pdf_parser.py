@@ -1,5 +1,7 @@
-# Importing PyPDF2 PDF management package:
+# Importing PDF management libraries:
 import PyPDF2 as p2
+import pdfplumber
+
 # Importing data management packages:
 from collections import Counter
 
@@ -12,10 +14,10 @@ class pdf(p2.PdfFileReader):
 
     Critically most of the methods stored within this object are used to
     construct instance variables and as such many of the methods are called within
-    the initalization of object and heavily make use of the PyPDF2 library. It is
-    a child object of the PyPDF2 PdfFileReader object as many of the methods
-    used by said class are integral to the function of this object. This will
-    primarily be used as a base class to be inherited for other packages and methods.
+    the initalization of object and heavily make use of the PyPDF2 and pdfplumber
+    libraries. It is a child object of the PyPDF2 PdfFileReader object as many
+    of the methods used by said class are integral to the function of this object.
+    This will primarily be used as a base class to be inherited for other packages and methods.
 
     Parameters
     -----------
@@ -24,7 +26,11 @@ class pdf(p2.PdfFileReader):
 
     Methods
     -----------
-    pop_destination_lst : # TODO: Write pop_destination_lst description.
+    pop_destination_lst : A recursive method used to parse the .getOutlines()
+    object and produce dictionaries generated from Destination objects
+
+    build_toc : The main method that compliles the Table of Contents of the pdf
+    by modifying the main list of Destination dictionaries.
     """
 
     def __init__(self, file_path):
@@ -56,7 +62,8 @@ class pdf(p2.PdfFileReader):
         #print(self.destination_lst)
 
         # Calling self.build_toc:
-        self.build_toc(self.destination_lst)
+        #self.build_toc(self.destination_lst)
+
 
 
     def pop_destination_lst(self, dest_obj, counter):
@@ -95,7 +102,20 @@ class pdf(p2.PdfFileReader):
 
     def build_toc(self, destination_lst):
         '''
-        # TODO: Write method documentation after it is built.
+        The main method that compliles the Table of Contents of the pdf. It first
+        modifies the list of PyPDF destiation dictionaries to inclue the page
+        range of each destiation. This is done with a simple nested page range
+        detection algorithm which is described in depth in the documenation.
+
+        The method does not return an object, it modifies the existing dictionaries
+        in the self.destination_lst list.
+
+
+        Parameters
+        ----------
+        destination_lst : lst
+            A list containing all the destination dictionaries extacted from the
+            pdf via the self.pop_destination_lst() method.
         '''
 
         # Declearing list to store counts for each destiation's nest level:
@@ -188,11 +208,10 @@ class pdf(p2.PdfFileReader):
                     print(dict)
                     print('-------------------------------------------------------------')
 
-        # TODO: Created Data type that extracts pdf pages based on destination ranges.
-
-
+        # TODO: Integrate pdfplumber to get text data for each page range and index it.
+        # TODO: Create the selection algo that determines appropriate nest level.
 
 
 
 # Test:
-pdf('tests/test_pdfs/TESLA 10-K Report 2019.pdf')
+pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
