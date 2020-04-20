@@ -62,7 +62,7 @@ class pdf(p2.PdfFileReader):
         #print(self.destination_lst)
 
         # Calling self.build_toc:
-        #self.build_toc(self.destination_lst)
+        self.build_toc(self.destination_lst)
 
 
 
@@ -164,7 +164,7 @@ class pdf(p2.PdfFileReader):
                 # Defining the main dict's position in the list:
                 dict_index = self.destination_lst.index(dict)
 
-                # Using the nearest destination dict that is at the same list lvl or higer:
+                # Using the nearest destination dict that is at the same list lvl or higher:
                 if dict['Nested_level'] == nest_lvl:
 
                     print('CURRENT DESTINATION:', dict['Title'], 'START PAGE:',
