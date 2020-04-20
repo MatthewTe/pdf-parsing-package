@@ -5,7 +5,7 @@ import pdfplumber
 # Importing data management packages:
 from collections import Counter
 
-# Creating class that is meant to represent the Financial Report PDF:
+
 class pdf(p2.PdfFileReader):
     """
     pdf() object contains all the methods necessary to parse a pdf file and
@@ -35,6 +35,8 @@ class pdf(p2.PdfFileReader):
 
     def __init__(self, file_path):
 
+        # TODO: Add an echo variable that determines if outputs are printed during run 4 debug.
+
         # Initalizing PdfFileReader child object:
         super().__init__(file_path)
 
@@ -49,9 +51,12 @@ class pdf(p2.PdfFileReader):
 
             self.decrypt(password)
 
-        # If pdf is not encrypted the conditional is passed over:
+            # Defining pdf file object for pdfplumber with password:
+            self.pdf_plumb = pdfplumber.open(file_path, password=password)
+
+        # If pdf is not encrypted the pdf file object for pdfplumber is defined:
         else:
-            pass
+            self.pdf_plumb = pdfplumber.open(file_path)
 
 
         # Declaring the instance list varialble to be populated by .pop_destination_lst():
@@ -61,11 +66,24 @@ class pdf(p2.PdfFileReader):
         self.pop_destination_lst(self.getOutlines(), counter=0)
         #print(self.destination_lst)
 
-        # Calling self.build_toc:
-        self.build_toc(self.destination_lst)
+        # Calculating the Page ranges for each destiation:
+        self.build_toc()
 
+        # Using pdf_plumb library to extract tables and text, indexing them by section:
+        indexed_text_dict = self.get_destination_text()
 
+        '''
+        # TODO: With core __init__ methods done write API methods for package:
+        - API for searching indexed_text_dict for specific elements based on input keys
+        using regex.
 
+        - API for Getting a specific Destination from the self.destination_lst
+        given input Parameters. Used Regex. (*args, *kwargs)
+
+        TLDR Build Search API
+
+        -
+        '''
     def pop_destination_lst(self, dest_obj, counter):
         '''
         A recursive method used to parse the .getOutlines() object and produce
@@ -100,7 +118,7 @@ class pdf(p2.PdfFileReader):
                 # Itterating the counter to indicate the nested level:
                 self.pop_destination_lst(x, counter+1)
 
-    def build_toc(self, destination_lst):
+    def build_toc(self):
         '''
         The main method that compliles the Table of Contents of the pdf. It first
         modifies the list of PyPDF destiation dictionaries to inclue the page
@@ -108,14 +126,7 @@ class pdf(p2.PdfFileReader):
         detection algorithm which is described in depth in the documenation.
 
         The method does not return an object, it modifies the existing dictionaries
-        in the self.destination_lst list.
-
-
-        Parameters
-        ----------
-        destination_lst : lst
-            A list containing all the destination dictionaries extacted from the
-            pdf via the self.pop_destination_lst() method.
+        in the self.destination_lst instance list.
         '''
 
         # Declearing list to store counts for each destiation's nest level:
@@ -180,7 +191,6 @@ class pdf(p2.PdfFileReader):
 
                             # This means that this destination occurs for rest of pdf:
                             dict['Page_Range'] = (dict['Start_Page'], self.getNumPages())
-                            #del dict['Start_Page']
 
                             print('ADJACENT DESTINATION:', dict['Title'],
                             'START PAGE', dict['Start_Page'], 'NEST LEVEL:',
@@ -193,7 +203,6 @@ class pdf(p2.PdfFileReader):
 
                                 # Replacing Start_Page & End_Page dict items w/ page range tuple:
                                 dict['Page_Range'] = (dict['Start_Page'], next_dict['Start_Page'])
-                                del dict['Start_Page']
 
                                 print('ADJACENT DESTINATION:', next_dict['Title'],
                                 'START PAGE', next_dict['Start_Page'], 'NEST LEVEL:',
@@ -208,9 +217,69 @@ class pdf(p2.PdfFileReader):
                     print(dict)
                     print('-------------------------------------------------------------')
 
-        # TODO: Integrate pdfplumber to get text data for each page range and index it.
-        # TODO: Create the selection algo that determines appropriate nest level.
 
+        # TODO: Write this whole error catch to return as a user warning.
+        print('\n---------------------------------------------------------------')
+        print('|BRUTE FORCE DESTINATION CORRECTION OCCURED ON FOLLOWING DICTS|')
+        print('---------------------------------------------------------------')
+
+        # Brute Force Conditional to catch Destination the shitty Conditional algo missed:
+        for dict in self.destination_lst:
+
+            if 'Page_Range' in dict:
+                del dict['Start_Page']
+                pass
+
+            else:
+
+                dict['Page_Range'] = (dict['Start_Page'], self.getNumPages())
+                del dict['Start_Page']
+                print(dict)
+
+        print('---------------------------------------------------------------')
+
+    def get_destination_text(self):
+        '''
+        Method iterates through the instance list destination_lst and uses the
+        pdf_plumb library to extract all the text and tables from each individual
+        destiation section and creates a dictionary where the keys is the title
+        of the destination from which the text data was extracted.
+
+        Returns
+        -------
+        indexed_text_dict : dict
+            A dictionary storing all the text and table-extracted-text from the
+            pdf indexed by destiation titles.
+        '''
+
+        # TODO: Find a way to incorporate text tables to each dict element.
+
+        # Main dictionary:
+        indexed_text_dict = {}
+
+        # Iterating through destination_lst extracting all relevant textual data:
+        for dict in self.destination_lst:
+
+            # list of all page strings:
+            text_page_lst = []
+
+            # Unpacking variables from dict page range tuple:
+            (start_page, end_page) = dict['Page_Range']
+
+            # Initalzing the list of pdfplumber page objects given the page range:
+            pdf_pages = self.pdf_plumb.pages[start_page:end_page]
+
+            # Iterating through list of pdf pages and extracting text strings:
+            for page in pdf_pages:
+
+                # Building text_page_lst:
+                text = page.extract_text()
+
+                text_page_lst.append(text)
+
+            indexed_text_dict[dict['Title']] = text_page_lst
+
+        return indexed_text_dict
 
 
 # Test:

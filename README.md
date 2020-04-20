@@ -1,10 +1,10 @@
 # PDF Ingestion and Data Transformation Package with PyPDF2 and pdfplumber
-* Financial Report Ingestion Engine Structure
 * Table of Contents Extraction
+* Text Extraction
 
-### Financial Report Ingestion
-The ingestion of a firms 10-Q & 10-K PDF Reports is mainly done via the PyPDF2 and
-the pdfplumber libraries. The structure of the main pdf object is as follows:
+### PDF Ingestion
+The ingestion of pdfs are mainly done via the PyPDF2 and the pdfplumber libraries.
+ The structure of the main pdf object is as follows:
 
 - The Table of Contents that contains a list of all the pdf sections and nested
 sub-sections with their respective page ranges is built using the PyPDF2 library
@@ -25,7 +25,7 @@ The first step to implementing the lazy prices algorithm is to extract the table
 of contents from a financial statement.
 
 Currently this is done via PyPDF2. The library allows you to extract a Destination
-objects. PDF Destinations are "a named page view". It associates a unique name with
+objects. PDF Destinations are ["a named page view"](https://www.evermap.com/Tutorial_ABM_Destinations.asp). It associates a unique name with
 a specific page location within a PDF document. In practice this is what allows
 bookmark functionality in a pdf viewer. The PyPDF2 library allows for the extraction
 of a pdf's outline as a [nested list of Destination objects](https://pythonhosted.org/PyPDF2/PdfFileReader.html) Through the `.getOutlines()` method.
@@ -92,6 +92,36 @@ for nest_lvl in reversed(unique_nest_vals):
 
           else:
             continue
+
+          # Brute Force Conditional to catch Destination the ] Conditional algo missed:
+          for dict in self.destination_lst:
+              if 'Page_Range' in dict:
+                  del dict['Start_Page']
+                  pass
+
+              else:
+                dict['Page_Range'] = (dict['Start_Page'], self.getNumPages())
+                del dict['Start_Page']
 ```
 
 **NOTE: This method is REALLY INEFFICIENT and 10000% NEEDS to be replaced by a recursive method that performs the same function in a way that is more pythonic and more efficient**
+
+## Text Extraction
+Once the `self.destination_lst` has been fully constructed via the `pop_destination_lst() and build_toc()`
+methods, the next step is to extract all the text data for each destination. This is done by calling the
+`get_destination_text()` method. This method simply iterates over the destinations in `destination_lst` and uses the pdfplumber page and text extraction methods to create a new dictionary which contains a list of strings representing all the text extracted for each destination keyed by each destination title:
+
+```python
+# Iterating through list of destination dicts:
+for dict in self.destination_lst:
+
+  pdf_pages = self.pdf_plumb.pages[start_page:end_page]
+
+  # Iterating through page objects to extract text into list:
+  for page in pdf_pages:
+    text = page.extract_text()
+    text_page_lst.append(text)
+
+  # Creating main dict:
+  indexed_text_dict[dict['Title']] = text_page_lst
+```
