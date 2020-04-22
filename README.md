@@ -109,7 +109,7 @@ for nest_lvl in reversed(unique_nest_vals):
 ## Text Extraction
 Once the `self.destination_lst` has been fully constructed via the `pop_destination_lst() and build_toc()`
 methods, the next step is to extract all the text data for each destination. This is done by calling the
-`get_destination_text()` method. This method simply iterates over the destinations in `destination_lst` and uses the pdfplumber page and text extraction methods to create a new dictionary which contains a list of strings representing all the text extracted for each destination keyed by each destination title:
+`build_destination_text()` method. This method simply iterates over the destinations in `destination_lst` and uses the pdfplumber page and text extraction methods to create a new dictionary which contains a list of strings representing all the text extracted for each destination keyed by each destination title:
 
 ```python
 # Iterating through list of destination dicts:
@@ -124,4 +124,8 @@ for dict in self.destination_lst:
 
   # Creating main dict:
   indexed_text_dict[dict['Title']] = text_page_lst
+```
+The end result of this, when called by the __init__ method is the variable `self.indexed_text_dict` that stores pdf textual data as follows:
+```python
+{'Title_of_pdf_section':[list of pfd test strings with each string being the text of a sigle page]} 
 ```
