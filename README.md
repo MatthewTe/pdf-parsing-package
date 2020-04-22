@@ -127,5 +127,5 @@ for dict in self.destination_lst:
 ```
 The end result of this, when called by the __init__ method is the variable `self.indexed_text_dict` that stores pdf textual data as follows:
 ```python
-self.indexed_text_dict = {'Title_of_pdf_section':[list of pfd test strings with each string being the text of a sigle page]} 
+{'Title_of_pdf_section':[list of pfd test strings with each string being the text of a sigle page]} 
 ```
