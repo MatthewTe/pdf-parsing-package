@@ -4,6 +4,8 @@ import pdfplumber
 
 # Importing data management packages:
 from collections import Counter
+# Importing native python package management libs:
+import warnings
 
 
 class pdf(p2.PdfFileReader):
@@ -24,6 +26,10 @@ class pdf(p2.PdfFileReader):
     file_path : str
         The string representing the file path to the pdf.
 
+    echo : bool
+        echo determines if print statements describing methods processes are
+        output to the console. By deafult echo=False
+
     Methods
     -----------
     pop_destination_lst : A recursive method used to parse the .getOutlines()
@@ -31,14 +37,19 @@ class pdf(p2.PdfFileReader):
 
     build_toc : The main method that compliles the Table of Contents of the pdf
     by modifying the main list of Destination dictionaries.
+
+    build_destination_text :
+
+    get_sections :
     """
 
-    def __init__(self, file_path):
-
-        # TODO: Add an echo variable that determines if outputs are printed during run 4 debug.
+    def __init__(self, file_path, echo=False):
 
         # Initalizing PdfFileReader child object:
         super().__init__(file_path)
+
+        # instance echo variable
+        self.echo = echo
 
         # File path:
         self.file_path = file_path
@@ -70,20 +81,9 @@ class pdf(p2.PdfFileReader):
         self.build_toc()
 
         # Using pdf_plumb library to extract tables and text, indexing them by section:
-        indexed_text_dict = self.get_destination_text()
+        self.indexed_text_dict = self.build_destination_text()
 
-        '''
-        # TODO: With core __init__ methods done write API methods for package:
-        - API for searching indexed_text_dict for specific elements based on input keys
-        using regex.
 
-        - API for Getting a specific Destination from the self.destination_lst
-        given input Parameters. Used Regex. (*args, *kwargs)
-
-        TLDR Build Search API
-
-        -
-        '''
     def pop_destination_lst(self, dest_obj, counter):
         '''
         A recursive method used to parse the .getOutlines() object and produce
@@ -160,11 +160,12 @@ class pdf(p2.PdfFileReader):
         #print(reversed(unique_nest_vals))
 
 
-        '# Itterating through Destinations to determine their page ranges: '
-        # Print Statements are for diagnositics & comprehension during run:
-        print('-------------------------------------------------------------')
-        print('| PDF SECTION-PAGE-RANGE-DETECTION ALGORITHM RESULTS        |')
-        print('-------------------------------------------------------------')
+        if self.echo is True:
+            '# Itterating through Destinations to determine their page ranges: '
+            # Print Statements are for diagnositics & comprehension during run:
+            print('-------------------------------------------------------------')
+            print('| PDF SECTION-PAGE-RANGE-DETECTION ALGORITHM RESULTS        |')
+            print('-------------------------------------------------------------')
 
         # Itterating through each nest level beinging with the deepest level:
         for nest_lvl in reversed(unique_nest_vals):
@@ -178,8 +179,9 @@ class pdf(p2.PdfFileReader):
                 # Using the nearest destination dict that is at the same list lvl or higher:
                 if dict['Nested_level'] == nest_lvl:
 
-                    print('CURRENT DESTINATION:', dict['Title'], 'START PAGE:',
-                    dict['Start_Page'], 'NEST LEVEL:', dict['Nested_level'])
+                    if self.echo is True:
+                        print('CURRENT DESTINATION:', dict['Title'], 'START PAGE:',
+                        dict['Start_Page'], 'NEST LEVEL:', dict['Nested_level'])
 
 
                     # Itterating through each destiation dict AFTER the main dict in the list:
@@ -192,9 +194,10 @@ class pdf(p2.PdfFileReader):
                             # This means that this destination occurs for rest of pdf:
                             dict['Page_Range'] = (dict['Start_Page'], self.getNumPages())
 
-                            print('ADJACENT DESTINATION:', dict['Title'],
-                            'START PAGE', dict['Start_Page'], 'NEST LEVEL:',
-                            dict['Nested_level'])
+                            if self.echo is True:
+                                print('ADJACENT DESTINATION:', dict['Title'],
+                                'START PAGE', dict['Start_Page'], 'NEST LEVEL:',
+                                dict['Nested_level'])
 
                         else:
 
@@ -204,24 +207,19 @@ class pdf(p2.PdfFileReader):
                                 # Replacing Start_Page & End_Page dict items w/ page range tuple:
                                 dict['Page_Range'] = (dict['Start_Page'], next_dict['Start_Page'])
 
-                                print('ADJACENT DESTINATION:', next_dict['Title'],
-                                'START PAGE', next_dict['Start_Page'], 'NEST LEVEL:',
-                                next_dict['Nested_level'])
+                                if self.echo is True:
+                                    print('ADJACENT DESTINATION:', next_dict['Title'],
+                                    'START PAGE', next_dict['Start_Page'], 'NEST LEVEL:',
+                                    next_dict['Nested_level'])
 
                                 break
 
                             else:
                                 continue
 
-
-                    print(dict)
-                    print('-------------------------------------------------------------')
-
-
-        # TODO: Write this whole error catch to return as a user warning.
-        print('\n---------------------------------------------------------------')
-        print('|BRUTE FORCE DESTINATION CORRECTION OCCURED ON FOLLOWING DICTS|')
-        print('---------------------------------------------------------------')
+                    if self.echo is True:
+                        print(dict)
+                        print('-------------------------------------------------------------')
 
         # Brute Force Conditional to catch Destination the shitty Conditional algo missed:
         for dict in self.destination_lst:
@@ -234,11 +232,20 @@ class pdf(p2.PdfFileReader):
 
                 dict['Page_Range'] = (dict['Start_Page'], self.getNumPages())
                 del dict['Start_Page']
-                print(dict)
 
-        print('---------------------------------------------------------------')
+                runtime_warn_msg = f'''The "{dict['Title']}" section was not caught by the
+                page-range-detection-algorithm. It was manually modified as such:
 
-    def get_destination_text(self):
+                ----------------------------------------------------------------
+                {dict}
+                ----------------------------------------------------------------
+
+                The page range of this section may be incorrect.
+                '''
+
+                warnings.warn(runtime_warn_msg, category=RuntimeWarning)
+
+    def build_destination_text(self):
         '''
         Method iterates through the instance list destination_lst and uses the
         pdf_plumb library to extract all the text and tables from each individual
@@ -281,6 +288,51 @@ class pdf(p2.PdfFileReader):
 
         return indexed_text_dict
 
+    def get_sections(self, *keywords):
+        '''
+        .get_sections method parses the instance dictionary containing all
+        extracted pdf text and returns the text contained in pdf sections
+        based on the input *keywords. This method gives the pdf() object its main
+        search functionality.
+
+        Parameters
+        ----------
+        *keywords : *arg string
+            The key word strings that will be used by the method to perform a search
+            of the self.indexed_text_dict keys.
+
+        Returns
+        -------
+        search_results : dict
+            A dictionary containing all the elements of self.indexed_text_dict
+            that were selected by this search method.
+        '''
+        # Empty main dict:
+        search_results = {}
+
+        # Iterating through indexed_text_dict keys to perform search:
+        for key in self.indexed_text_dict.keys():
+
+            #print(key.lower())
+
+            # Comparing each key to every seach keyword:
+            for keyword in keywords:
+
+                # Appending key-value pair from self.indexed_text_dict if search selects it:
+                if keyword.lower() in key.lower() and key not in search_results:
+
+                    search_results[key] = self.indexed_text_dict[key]
+
+                else:
+                    continue
+
+        return search_results
+
+
+
+
+
 
 # Test:
-pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
+XOM = pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
+#print(XOM.get_sections('mine', 'mine').keys())
