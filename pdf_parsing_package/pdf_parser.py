@@ -259,7 +259,6 @@ class pdf(p2.PdfFileReader):
             pdf indexed by destiation titles.
         '''
 
-        # TODO: Find a way to incorporate text tables to each dict element.
 
         # Main dictionary:
         indexed_text_dict = {}
@@ -335,4 +334,4 @@ class pdf(p2.PdfFileReader):
 
 # Test:
 XOM = pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
-#print(XOM.get_sections('mine', 'mine').keys())
+print(XOM.get_sections('mine'))

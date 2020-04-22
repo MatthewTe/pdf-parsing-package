@@ -1,6 +1,7 @@
 # PDF Ingestion and Data Transformation Package with PyPDF2 and pdfplumber
-* Table of Contents Extraction
-* Text Extraction
+* [Table of Contents Extraction](https://github.com/MatthewTe/pdf-parsing-package#pdf-ingestion)
+* [Text Extraction](https://github.com/MatthewTe/pdf-parsing-package#text-extraction)
+* [Search Method]()
 
 ### PDF Ingestion
 The ingestion of pdfs are mainly done via the PyPDF2 and the pdfplumber libraries.
@@ -127,5 +128,22 @@ for dict in self.destination_lst:
 ```
 The end result of this, when called by the __init__ method is the variable `self.indexed_text_dict` that stores pdf textual data as follows:
 ```python
-{'Title_of_pdf_section':[list of pfd test strings with each string being the text of a sigle page]} 
+{'Title_of_pdf_section':[list of pdf test strings with each string being the text of a single page]}
 ```
+
+## Search Method
+The purpose of the search method `pdf.get_sections()` is to provide an API for querying the main pdf object for text from specific
+sections of the pdf. It is done by a very straightforward conditional statement that compares input search `keywords` to the destination
+dictionary keys and builds a dictionary containing only the key-value pairs that were found via the keyword search.
+
+Keywords and dictionary keys are converted to lowercase in order to perform the search, making the search inputs case-insensitive.
+
+Example of the section search functionality:
+```python
+XOM = pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
+XOM.get_sections('mine')
+
+# Would Return:
+# {'ITEM 4. MINE SAFETY DISCLOSURES': [list of strings]}
+```
+**ToDO: Incorporate Table Text Functionality, transform [list of strings] to its own dict like {string_list: [], table_text: []}
