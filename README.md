@@ -1,7 +1,7 @@
 # PDF Ingestion and Data Transformation Package with PyPDF2 and pdfplumber
-* [Table of Contents Extraction](https://github.com/MatthewTe/pdf-parsing-package#pdf-ingestion)
+* [Table of Contents Extraction](https://github.com/MatthewTe/pdf-parsing-package#table-of-contents-extraction)
 * [Text Extraction](https://github.com/MatthewTe/pdf-parsing-package#text-extraction)
-* [Search Method]()
+* [Search Method](https://github.com/MatthewTe/pdf-parsing-package#search-method)
 
 ### PDF Ingestion
 The ingestion of pdfs are mainly done via the PyPDF2 and the pdfplumber libraries.
