@@ -156,6 +156,7 @@ To interact with the sqlite database that contains the pdf data the object must 
 | Name | Date | Path | Date_added |
 |------|------|------|------------|
 | TEXT | TEXT | TEXT | TEXT       |
+
  This table will be used to provide information about the current database.
 
 #### `pdf_to_db(self, pdf_path, table_name, pdf_date)`
@@ -163,6 +164,7 @@ This is the api that uses the `pdf_parser` object to convert a pdf into a series
 | Section | Start_Page | End_Page | Section_Text |
 |---------|------------|----------|--------------|
 | TEXT    | INTEGER    |  INTEGER | TEXT         |
+
 The `pdf_to_db()` method also writes logging/meta-data about the earlier pdf table to the `Summary` table previously described.
 
 Example:
