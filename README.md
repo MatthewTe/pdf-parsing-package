@@ -2,7 +2,7 @@
 * [Table of Contents Extraction](https://github.com/MatthewTe/pdf-parsing-package#table-of-contents-extraction)
 * [Text Extraction](https://github.com/MatthewTe/pdf-parsing-package#text-extraction)
 * [Search Method](https://github.com/MatthewTe/pdf-parsing-package#search-method)
-* [PDF Sqlite Database API](placeholder)
+* [PDF Sqlite Database API](https://github.com/MatthewTe/pdf-parsing-package#sqlite-database-api)
 
 
 ### PDF Ingestion
