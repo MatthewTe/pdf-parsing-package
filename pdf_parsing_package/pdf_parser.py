@@ -326,12 +326,3 @@ class pdf(p2.PdfFileReader):
                     continue
 
         return search_results
-
-
-
-
-
-
-# Test:
-XOM = pdf('tests/test_pdfs/ExxonMobil 2019 10-K Report.pdf')
-print(XOM.get_sections('mine'))
