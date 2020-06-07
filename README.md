@@ -1,5 +1,5 @@
 # PDF Ingestion and Data Transformation Package with PyPDF2 and pdfplumber
-* [Instillation Instructions](placeholder)
+* [Instillation Instructions](https://github.com/MatthewTe/pdf-parsing-package#instillation-instructions)
 * [Table of Contents Extraction](https://github.com/MatthewTe/pdf-parsing-package#table-of-contents-extraction)
 * [Text Extraction](https://github.com/MatthewTe/pdf-parsing-package#text-extraction)
 * [Search Method](https://github.com/MatthewTe/pdf-parsing-package#search-method)
