@@ -1,9 +1,21 @@
 # PDF Ingestion and Data Transformation Package with PyPDF2 and pdfplumber
+* [Instillation Instructions](placeholder)
 * [Table of Contents Extraction](https://github.com/MatthewTe/pdf-parsing-package#table-of-contents-extraction)
 * [Text Extraction](https://github.com/MatthewTe/pdf-parsing-package#text-extraction)
 * [Search Method](https://github.com/MatthewTe/pdf-parsing-package#search-method)
 * [PDF Sqlite Database API](https://github.com/MatthewTe/pdf-parsing-package#sqlite-database-api)
 
+### Instillation Instructions
+The package can be directly installed via the pip package manager:
+```
+pip install git+https://github.com/MatthewTe/pdf-parsing-package.git
+```
+If dependencies are not automatically installed they can be manually installed as the packages are relatively lightweight:
+```
+pip install pandas
+pip install PyPDF2
+pip install pdfplumber
+```
 
 ### PDF Ingestion
 The ingestion of pdfs are mainly done via the PyPDF2 and the pdfplumber libraries.
