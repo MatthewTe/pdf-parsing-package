@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pdf_parser_api",
-    version="0.0.1",
+    version="0.0.2",
     author="MatthewTe",
     author_email="teelucksingh.matthew1@gmail.com",
     description="A package for converting a pdf to textual data and writing to a sqlite database",
