@@ -235,14 +235,14 @@ pdf_db('test_db').clean_text('''The method s2342342erves as a 'helper' method???
 #### `tokenize_text(text)`
 A basic method that uses the nltk toolkit to tokenizes and lemmatize the input text. It should be noted that this is done by a constant/semi-redundant use of converting a large string into a list of words and back. This may cause performance issues if method is applied on very large datasets.
 
-**Note:** The nltk library that is being used in both `tokenize_text()` and `clean_text` need their own nltk word corpus. If these are not installed then these methods will not function. Simply insall them via the:
+**Note:** The nltk library that is being used in both `tokenize_text()` and `clean_text()` need their own nltk word corpus. If these are not installed then these methods will not function. Simply insall them via the:
 Example:
 ```python
 import nltk
 nltk.download('wordnet')
 nltk.download('stopwords')
 
-# Initializing the two corpus:
+# Initializing the corpus:
 stopwords = nltk.corpus.stopwords.words('english')
 ```
 
@@ -257,4 +257,4 @@ pdf_db.tokenize_text(example_txt)
 
 ```
 
-**Note:** It is unknown if this is the most effective may of accurately pre-processing pdf text data as it may be too reductive, especially when combined with the `clean_text()` method as is the case in the `pdf_to_db` method. If this is the case a more simplistic data cleaning process may be necessary.
+**Note:** It is unknown if this is the most effective way of accurately pre-processing pdf text data as it may be too reductive, especially when combined with the `clean_text()` method as is the case in the `pdf_to_db` method. If this is the case a more simplistic data cleaning process may be necessary.
