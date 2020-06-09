@@ -177,6 +177,7 @@ This is the api that uses the `pdf_parser` object to convert a pdf into a series
 | Section | Start_Page | End_Page | Section_Text |
 |---------|------------|----------|--------------|
 | TEXT    | INTEGER    |  INTEGER | TEXT         |
+
 The Section_Text column is populated with the raw text extracted from a pdf section that undergoes a cleaning process to make the textual data easier to analyze. The raw text is transformed using the `pdf_db.clean_text()` and the `pdf_db.tokenize_text()` methods described below. The 'cleaned' output of these methods are what is written to the Section_Text column of the database:
 ```python
 # Iterating through the pdf_parser indexed_text_dict and writing to db:
