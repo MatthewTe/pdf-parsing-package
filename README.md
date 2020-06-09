@@ -199,7 +199,7 @@ The `pdf_to_db()` method also writes logging/meta-data about the earlier pdf tab
 Example:
 ```python
 test = pdf_tb('test_db')
-test.pdf_to_db('path_to_Exxon_pdf', 'Exxon_pdf_tbl_title', '2019')
+test.pdf_to_db('path_to_Exxon_pdf', 'Exxon_pdf_tbl_title', '2019', "XOM")
 ```
 
 #### `get_table_data(self, table_name, section_title=None)`
