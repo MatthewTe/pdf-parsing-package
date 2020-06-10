@@ -16,6 +16,7 @@ pip install pandas
 pip install PyPDF2
 pip install pdfplumber
 pip install nltk
+pip install Dash
 ```
 
 ### PDF Ingestion
