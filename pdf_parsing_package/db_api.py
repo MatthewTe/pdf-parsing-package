@@ -9,7 +9,7 @@ from nltk.stem import WordNetLemmatizer
 # nltk.download('wordnet')
 # nltk.download('stopwords')
 # Importing the pdf api:
-from pdf_parser import pdf
+import pdf_parser
 # Importing database libraries:
 import sqlite3
 
@@ -87,7 +87,7 @@ class pdf_db(object):
                     )
 
         # Initalzing the pdf parsing object:
-        pdf_parser = pdf(pdf_path)
+        pdf_parser = pdf_parser.pdf(pdf_path)
 
         # Iterating through the pdf_parser indexed_text_dict and writing to db:
         for key in pdf_parser.indexed_text_dict:
