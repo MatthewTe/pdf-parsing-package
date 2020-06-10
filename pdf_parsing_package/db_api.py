@@ -9,7 +9,8 @@ from nltk.stem import WordNetLemmatizer
 # nltk.download('wordnet')
 # nltk.download('stopwords')
 # Importing the pdf api:
-import pdf_parser
+from . import pdf_parser
+
 # Importing database libraries:
 import sqlite3
 
