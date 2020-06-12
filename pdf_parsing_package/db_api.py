@@ -9,7 +9,8 @@ from nltk.stem import WordNetLemmatizer
 # nltk.download('wordnet')
 # nltk.download('stopwords')
 # Importing the pdf api:
-from . import pdf_parser as pparser
+# from . import pdf_parser as pparser # For Production
+import pdf_parser as pparser # For Development
 
 # Importing database libraries:
 import sqlite3
@@ -55,7 +56,7 @@ class pdf_db(object):
         '''
         The method makes use of the pdf_parser api to write the generated key-value
         dict to the sqlite dictionary with the extracted strings cleaned for nlp
-        processing by the .clean_text() method.
+        processing by the .clean_text() and .tokenize_text() methods.
 
         Parameters
         ----------
@@ -68,19 +69,15 @@ class pdf_db(object):
 
         pdf_date : str
             A string that indicates the date relevant to the pdf being uploaded
-            to the database. This string is also used to build the table name for
-            the current pdf.
+            to the database. This MUST be a full date in the form of dd/mm/yyyy.
 
         ticker : str
             A string that represents the ticker symbol associated with the pdf being
             read to the database. This ticker will be written to the Summary table.
         '''
-        # Building table title string:
-        tbl_title = f"{table_name}_{pdf_date}"
-
         # Creating the table:
         self.c.execute(
-            f"""CREATE TABLE {tbl_title} (
+            f"""CREATE TABLE IF NOT EXISTS {table_name} (
                 Section TEXT Primary Key,
                 Start_Page INTEGER,
                 End_Page INTEGER,
@@ -93,33 +90,38 @@ class pdf_db(object):
         # Iterating through the pdf_parser indexed_text_dict and writing to db:
         for key in pdf_parser.indexed_text_dict:
 
-            # Converting the list of strings associated with each dict key to single str:
-            raw_txt = ' '.join(pdf_parser.indexed_text_dict[key])
+            # Try Catch if the pdf parser cannot extract text for a section:
+            try:
+                # Converting the list of strings associated with each dict key to single str:
+                raw_txt = ' '.join(pdf_parser.indexed_text_dict[key])
 
-            # Cleaning text into nlp friendly format:
-            section_txt = pdf_db.clean_text(raw_txt)
+                # Cleaning text into nlp friendly format:
+                section_txt = pdf_db.clean_text(raw_txt)
 
-            # Converting the text into a Lemmatized format for further nlp processing:
-            section_txt = pdf_db.tokenize_text(section_txt)
-            #print(section_txt)
+                # Converting the text into a Lemmatized format for further nlp processing:
+                section_txt = pdf_db.tokenize_text(section_txt)
+                #print(section_txt)
 
-            # Iterating through the list of info_dicts of pdf sections for page range:
-            for info_dict in pdf_parser.destination_lst:
+                # Iterating through the list of info_dicts of pdf sections for page range:
+                for info_dict in pdf_parser.destination_lst:
 
-                # If the info dict is for the section indicated by key, unpacking page range:
-                if info_dict['Title'] == key:
+                    # If the info dict is for the section indicated by key, unpacking page range:
+                    if info_dict['Title'] == key:
 
-                    # Unpacking tuple of page range:
-                    (start_page, end_page) = info_dict['Page_Range']
+                        # Unpacking tuple of page range:
+                        (start_page, end_page) = info_dict['Page_Range']
 
-            # Inserting each element of the indexed pdf content to table:
-            self.c.execute(
-                f"""
-                INSERT INTO {tbl_title} VALUES (:section_name, :start_page,
-                :end_page, :section_txt)""",
-                {'section_name':key, 'section_txt': section_txt,
-                 'start_page': start_page, 'end_page': end_page}
-                    )
+                # Inserting each element of the indexed pdf content to table:
+                self.c.execute(
+                    f"""
+                    INSERT INTO {table_name} VALUES (:section_name, :start_page,
+                    :end_page, :section_txt)""",
+                    {'section_name':key, 'section_txt': section_txt,
+                     'start_page': start_page, 'end_page': end_page}
+                        )
+
+            except:
+                pass
 
         # Building variables to be written to the Summary logging table:
         date_written = datetime.date(datetime.now())
@@ -127,11 +129,55 @@ class pdf_db(object):
         # Writing the logging/summary data to the summary database table:
         self.c.execute(
             """INSERT INTO Summary VALUES (:name, :ticker, :date, :path, :date_written)""",
-                {'name': tbl_title, 'ticker': ticker, 'date': pdf_date, 'path': pdf_path,
+                {'name': table_name, 'ticker': ticker, 'date': pdf_date, 'path': pdf_path,
                 'date_written': date_written}
                 )
 
         # Commiting all changes to database:
+        self.con.commit()
+
+    # Method that creates a table containing all the summary data for a specific ticker:
+    def build_ticker_tbl(self, ticker):
+        '''
+        This method creates and populates a table in the database that contains
+        the table names and relevant information for a ticker symbol.
+
+        Parameters
+        ----------
+        ticker : str
+            A string representing the ticker symbol of the table that will be
+            created and populated.
+        '''
+        # Building custom table name:
+        table_name = f'{ticker}_tables'
+
+        # Creating a database table for the ticker where all data will be written to:
+        self.c.execute(
+            f"""
+            CREATE TABLE IF NOT EXISTS {table_name} (
+                Name TEXT UNIQUE,
+                date TEXT UNIQUE
+                )""")
+
+        self.con.commit()
+
+        # Executing a query to extract data from the Summary table for ticker data:
+        self.c.execute(
+            'SELECT * FROM Summary WHERE Ticker=:ticker_symbol',
+            {'ticker_symbol':ticker})
+
+        # Iterating through the self.c.fetchall() and writing data to ticker table:
+        for tuple in self.c.fetchall():
+
+            # Unpacking tuple:
+            (tbl_name, ticker_symbol, pdf_date, pdf_path, date_uploaded) = tuple
+
+            # Writing each row to the ticker database:
+            self.c.execute(
+                f"""
+                INSERT OR IGNORE INTO {table_name} VALUES (:tbl_name, :pdf_date)
+                """, {'tbl_name': tbl_name, 'pdf_date':pdf_date})
+
         self.con.commit()
 
     # Method that extracts an entire table of data:
@@ -141,11 +187,6 @@ class pdf_db(object):
         data from table in the database and representing it as a dataframe. It
         also allows the database query to be for a specific section title. If that
         is the case it only returns a dict containing this information.
-
-        In both cases the text data read from the database is pre-processed for
-        natural language processing. The text for each section is converted from
-        a single string to a tokenized list of lemmatized string with stop words
-        removed.
 
         Parameters
         ----------
@@ -229,7 +270,7 @@ class pdf_db(object):
 
         return clean_text
 
-    # Method that tokenizes and pre-processes string data when being extracted:
+    # Method that tokenizes and pre-processes string data when beinUNIQUEg extracted:
     def tokenize_text(text):
         '''
         This method is meant to be used as another 'helper' method in the
@@ -260,3 +301,16 @@ class pdf_db(object):
         processed_txt = ' '.join(processed_txt_lst)
 
         return processed_txt
+
+
+# Class inherits from the pdf_db object to perform actions on the db to implement
+# the lazy prices algo:
+class lazy_prices(pdf_db):
+    """
+    This is the object that inherits the pdf_db object and contains all the methods
+    necessary for implementing the lazy prices algorithm. This includes creating
+    custom database tables, reading and writing data to tables and performing
+    nlp processing on data.
+    """
+    def __init__(self, path):
+        pass
