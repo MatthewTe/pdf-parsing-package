@@ -25,6 +25,6 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     package_dir = {'':'pdf_parsing_package'},
-    install_requires=['PyPDF2', 'pdfplumber', 'pandas', 'nltk']
+    install_requires=['PyPDF2', 'pdfplumber', 'pandas', 'nltk', 'textdistance']
 
 )

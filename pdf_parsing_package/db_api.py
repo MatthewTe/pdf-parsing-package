@@ -11,6 +11,7 @@ import nltk
 from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
+import textdistance
 # nltk.download('wordnet')
 # nltk.download('stopwords')
 
@@ -95,7 +96,6 @@ class pdf_db(object):
             read to the database. This ticker will be written to the Summary table.
         '''
         # Creating the table:
-        # TODO: Update README with changes to the table schema once above change is made.
 
         self.c.execute(
             f"""CREATE TABLE IF NOT EXISTS {table_name} (
@@ -184,8 +184,13 @@ class pdf_db(object):
                 Table_name TEXT UNIQUE,
                 Pdf_type TEXT,
                 Date TEXT UNIQUE,
+                Cosine_Similarity REAL,
+                Jaccard_Similarity REAL,
+                Minimum_Edit_Distance REAL,
+                Simple_Similarity REAL
                 FOREIGN KEY (Table_name) REFERENCES Summary (Name)
                 )""")
+
 
         self.con.commit()
 
@@ -283,26 +288,64 @@ class pdf_db(object):
                     # Calculating the similarity between the init and second text:
                     try: # If there are two strings available for calculations:
 
+                        # Converting both text strings into word lists:
+                        init_pdf_txt_lst = init_pdf_section_text.split()
+                        second_pdf_txt_lst = second_pdf_section_text.split()
+
                         # Calculating cosine similarity:
-                        cosine_sim = pdf_db.cosine_sim(init_pdf_section_text, second_pdf_section_text)
+                        cosine_sim = textdistance.cosine(init_pdf_section_text, second_pdf_section_text)
 
-                        # TODO: Perform Jaccard Similarity calculation:
+                        # Performing Jaccard Similarity calculation:
+                        jaccard_sim = textdistance.jaccard(init_pdf_txt_lst, second_pdf_txt_lst)
 
-                        # TODO: Perform Minimum Edit Distance calculation:
+                        # Performing Minimum edit distance or levenshtein distance calculation:
+                        # NOTE: levenshtein distance to expensive for large strings, find workaround.
+                        '''leven_dist = textdistance.levenshtein(init_pdf_section_text,
+                            second_pdf_section_text)'''
 
                         # TODO: Perform Simple Similarity calculation:
 
+
                         # Writing the cosine similarity value to the inital pdf table:
-                        # TODO: Update execute statement to include all sim calculations:
                         self.c.execute(
                             f"""UPDATE {prev_yr_tbl[0]}
-                            SET Cosine_Similarity =:cosine_sim
+                            SET Cosine_Similarity =:cosine_sim, Jaccard_Similarity =:jaccard_sim
                             WHERE Section=:section_name""",
-                            {'cosine_sim':round(cosine_sim, 3), 'section_name':section_name})
+                            {'cosine_sim':round(cosine_sim, 3),
+                            'jaccard_sim': round(jaccard_sim,3),
+                            'section_name':section_name})
 
                     except:
-                        print("OOOF")
+                        pass
 
+                # Executing Queries to extract list of ALL strings from each pdf:
+                init_pdf_full_txt = ' '.join([
+                    str_tuple[0] for str_tuple in self.c.execute(
+                        f"SELECT Section_Text from {prev_yr_tbl[0]}")])
+
+                second_pdf_full_txt = ' '.join([
+                    str_tuple[0] for str_tuple in self.c.execute(
+                        f"SELECT Section_Text from {prev_yr_tbl[1]}")])
+
+                # Calculating cosine similarity between init and second pdf:
+                pdf_cosine_sim = textdistance.cosine(init_pdf_full_txt, second_pdf_full_txt)
+
+                # Converting full strings back into lists of strings:
+                init_pdf_full_txt = init_pdf_full_txt.split()
+                second_pdf_full_txt = second_pdf_full_txt.split()
+
+                # Calculating the jaccard similarity between init and second pdf:
+                pdf_jaccard_sim = textdistance.jaccard(init_pdf_full_txt, second_pdf_full_txt)
+
+                # Writing full pdf similarity metrics to the {ticker}_tables data tables:
+                self.c.execute(
+                    f"""UPDATE {table_name} SET Cosine_Similarity=:pdf_cosine_sim,
+                    Jaccard_Similarity=:pdf_jaccard_sim
+                    WHERE Table_name=:pdf_table_name""",{'pdf_cosine_sim':pdf_cosine_sim,
+                    'pdf_jaccard_sim':pdf_jaccard_sim, 'pdf_table_name':prev_yr_tbl[0]})
+
+                # TODO: Update Readme with this massive method include DETAILED DESCRIPTION OF METHODS.
+                self.con.commit()
 
             else:
                 pass
@@ -460,7 +503,8 @@ class pdf_db(object):
             of tuples that is from the previous year and the same pdf category.
         '''
         # Unpacking init tuples:
-        (table_title, pdf_type, pdf_date) = init_tuple
+        (table_title, pdf_type, pdf_date, cosine_sim, jaccard_sim,
+            min_edit_dist, simple_sim) = init_tuple
 
         # Converting the pdf date to a datetime object:
         pdf_date = datetime.strptime(pdf_date, '%d/%m/%Y').date()
@@ -533,6 +577,9 @@ class pdf_db(object):
 
     # TODO: Write a more complicated string matching method.
 
+'''
 test = pdf_db('/home/matthew/Documents/test_pdf_databases/test_db')
-#test.perform_sim_calculation('XOM')
-print(test.get_table_data('EXXON_10K_2019')['Cosine_Similarity'])
+test.perform_sim_calculation('XOM')
+print(test.get_table_data("XOM_tables")['Jaccard_Similarity'])
+print(test.get_table_data('EXXON_10K_2019')['Jaccard_Similarity'])
+'''
