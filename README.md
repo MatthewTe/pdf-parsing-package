@@ -287,7 +287,7 @@ for tuple in tuple_lst:
   self.c.execute('Update statement to {ticker}_tables')
 ```
 This process is also crudely described in the following diagram:
-![IMAGE NOT FOUND](placeholder)
+![IMAGE NOT FOUND](https://github.com/MatthewTe/pdf-parsing-package/blob/master/resources/perform_sim_calculations.png)
 
 From a functionality perspective the only thing that you really need to know about the `perform_sim_calculation()` method is that it populates the `{ticker}_tables` and all individual pdf tables of the same ticker with their similarity values. It calculates the similarly metrics between a pdf and its corresponding pdf of the previous year. For example if there is a 10-K report from 2019 it will perform a similarly comparison between it and the 10-K report from 2018.
 
