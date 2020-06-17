@@ -291,7 +291,7 @@ This process is also crudely described in the following diagram:
 
 From a functionality perspective the only thing that you really need to know about the `perform_sim_calculation()` method is that it populates the `{ticker}_tables` and all individual pdf tables of the same ticker with their similarity values. It calculates the similarly metrics between a pdf and its corresponding pdf of the previous year. For example if there is a 10-K report from 2019 it will perform a similarly comparison between it and the 10-K report from 2018.
 
-Determining the the corresponding pdf of the previous year is done by the `build_tbl_name_tuple` method. All of the similarity calculations are done using the `textdistance` library for implementing nlp similarity algorithms. This may change in the future however as more custom implementations of nlp similarity algorithms become necessary. 
+Determining the the corresponding pdf of the previous year is done by the `build_tbl_name_tuple` method. All of the similarity calculations are done using the `textdistance` library for implementing nlp similarity algorithms. This may change in the future however as more custom implementations of nlp similarity algorithms become necessary.
 
 The correct sequence with which to call these methods when adding pdfs to the database is as follows:
 ```python
@@ -394,4 +394,26 @@ pdf_db.build_tbl_name_tuple(initial_tuple, tuple_list)
 
 # <-----------------------Output----------------------------------------------->
 ('EXXON_10K_2019', None)
+```
+
+#### `calc_minedit_dist(string_1, string_2)`
+The code from this method is shamelessly taken from the [simtext python package](https://github.com/thunderhit/simtext).
+It makes direct use of the `difflib.SequenceMatcher()` method to calculate the Minimum Edit Distance between two lists of strings. It is used as a 'helper' method in the main `perform_sim_calculation()` method to write Minimum_Edit_Distance to the relevant database tables.
+
+Example:
+```python
+# Declaring the strings as a list of words:
+str_1 = """Method performs all elements of nlp similarity calculations between all
+    pdfs of a ceratin ticker symbol according to the lazy prices algorithm
+    described by the Documentation""".split()
+
+str_2 = """The method serves as a 'helper' method that modifies the raw text
+      extracted from the pdf_parser method. It converts the string into a more
+      nlp friendly format. It performs the following formatting:"""
+
+# Performing calculation:
+pdf_db.calc_minedit_dist(str_1, str_2):
+
+# <--------------------------------Output-------------------------------------->
+209
 ```

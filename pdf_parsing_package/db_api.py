@@ -12,6 +12,7 @@ from nltk.stem import WordNetLemmatizer
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import textdistance
+from difflib import Differ, SequenceMatcher
 # nltk.download('wordnet')
 # nltk.download('stopwords')
 
@@ -299,20 +300,17 @@ class pdf_db(object):
                         jaccard_sim = textdistance.jaccard(init_pdf_txt_lst, second_pdf_txt_lst)
 
                         # Performing Minimum edit distance or levenshtein distance calculation:
-                        # NOTE: levenshtein distance to expensive for large strings, find workaround.
-                        '''leven_dist = textdistance.levenshtein(init_pdf_section_text,
-                            second_pdf_section_text)'''
-
-                        # TODO: Perform Simple Similarity calculation:
-
+                        min_edit_dist = pdf_db.calc_minedit_dist(init_pdf_txt_lst, second_pdf_txt_lst)
 
                         # Writing similarity valus to the inital pdf table:
                         self.c.execute(
                             f"""UPDATE {prev_yr_tbl[0]}
-                            SET Cosine_Similarity =:cosine_sim, Jaccard_Similarity =:jaccard_sim
+                            SET Cosine_Similarity =:cosine_sim, Jaccard_Similarity =:jaccard_sim,
+                            Minimum_Edit_Distance =:min_edit_dist
                             WHERE Section=:section_name""",
                             {'cosine_sim':round(cosine_sim, 3),
                             'jaccard_sim': round(jaccard_sim,3),
+                            'min_edit_dist': min_edit_dist,
                             'section_name':section_name})
 
                     except:
@@ -337,12 +335,20 @@ class pdf_db(object):
                 # Calculating the jaccard similarity between init and second pdf:
                 pdf_jaccard_sim = textdistance.jaccard(init_pdf_full_txt, second_pdf_full_txt)
 
+                # Calculating the Minimum Edit Distance between init and second pdf:
+                min_edit_dist = pdf_db.calc_minedit_dist(init_pdf_full_txt, second_pdf_full_txt)
+
                 # Writing full pdf similarity metrics to the {ticker}_tables data tables:
                 self.c.execute(
-                    f"""UPDATE {table_name} SET Cosine_Similarity=:pdf_cosine_sim,
-                    Jaccard_Similarity=:pdf_jaccard_sim
-                    WHERE Table_name=:pdf_table_name""",{'pdf_cosine_sim':pdf_cosine_sim,
-                    'pdf_jaccard_sim':pdf_jaccard_sim, 'pdf_table_name':prev_yr_tbl[0]})
+                    f"""UPDATE {table_name} SET
+                    Cosine_Similarity=:pdf_cosine_sim,
+                    Jaccard_Similarity=:pdf_jaccard_sim,
+                    Minimum_Edit_Distance=:min_edit_dist
+                    WHERE Table_name=:pdf_table_name""",
+                    {'pdf_cosine_sim':round(pdf_cosine_sim, 3),
+                    'pdf_jaccard_sim':round(pdf_jaccard_sim, 3),
+                    'min_edit_dist':round(min_edit_dist, 3),
+                    'pdf_table_name':prev_yr_tbl[0]})
 
                 self.con.commit()
 
@@ -532,3 +538,66 @@ class pdf_db(object):
             name_tuple = (table_title, None)
 
         return name_tuple
+
+    # Method calculates and returns the Minimum_Edit_Distance between two string lists:
+    def calc_minedit_dist(string_1, string_2):
+        '''
+        Method that calculates the Minimum Edit Distance between two lists of strings
+        via the use of the difflib package by tracking the changes necessary to
+        transform string_1 list into string_2 list. It mainly makes use of the
+        SequenceMatcher() method.
+
+        Parameters
+        ----------
+        string_1 : lst
+            The first list of string to be compared.
+
+        string_2 : lst
+            The second list of string to be compared.
+
+        Returns
+        -------
+        num_edits : int
+            An integer that represents the number of edits required to transform
+            the string_1 list into the string_2 list.
+        '''
+        # Converting all strings in each list to lowercase:
+        str_1_lower = [string.lower() for string in string_1]
+        str_2_lower = [string.lower() for string in string_2]
+
+        # Initalizing the SequenceMatcher object w strings lists:
+        s = SequenceMatcher(None, str_1_lower, str_2_lower)
+
+        # Creating the variable representing the number of edits performed during transformation:
+        num_edits = 0
+
+        # Iterating through SequenceMatcher() transformation tuple list:
+        for tag, i_1, i_2, j_1, j_2 in s.get_opcodes():
+
+            # If a replace action is performed:
+            if tag == 'replace':
+
+                # Increase by the highest value between (i_2 - i_1, j_2 - j_1):
+                num_edits += max(i_2-i_1, j_2-j_1)
+
+            # If a insert action is performed:
+            elif tag == 'insert':
+
+                # Increase by the difference between j_2 and j_1:
+                num_edits += (j_2 - j_1)
+
+            # If a delete action is performed:
+            elif tag == 'delete':
+
+                # Increase by the difference between i_2 and i_1:
+                num_edits += (i_2 - i_1)
+
+        return num_edits
+
+'''
+# Testing:
+test = pdf_db('/home/matthew/Documents/test_pdf_databases/test_db')
+test.perform_sim_calculation('XOM')
+print(test.get_table_data('EXXON_10K_2019'))
+print(test.get_table_data('XOM_tables'))
+'''
