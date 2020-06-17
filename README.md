@@ -163,7 +163,7 @@ XOM.get_sections('mine')
 # {'ITEM 4. MINE SAFETY DISCLOSURES': [list of strings]}
 ```
 ## Sqlite Database API
-The `db_api.py` file contains the `pdf_db()` object that acts as an api for reading and writing the information generated from the `pdf_parser` methods:
+The `pdfdb.py` file contains the `pdf_db()` object that acts as an api for reading and writing the information generated from the `pdf_parser` methods:
 
 ### `pdf_db(db_path)`
 To interact with the sqlite database that contains the pdf data the object must be initialized with a string that represents the path to the database. In initializing the `pdf_db` object the database file is created if it does not currently exist, instance variables such as connection and cursor objects are declared and a main logging table called `Summary` is created with the following Schema:
