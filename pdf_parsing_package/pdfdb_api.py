@@ -593,11 +593,3 @@ class pdf_db(object):
                 num_edits += (i_2 - i_1)
 
         return num_edits
-
-'''
-# Testing:
-test = pdf_db('/home/matthew/Documents/test_pdf_databases/test_db')
-test.perform_sim_calculation('XOM')
-print(test.get_table_data('EXXON_10K_2019'))
-print(test.get_table_data('XOM_tables'))
-'''

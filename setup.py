@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pdfdbapi",
-    version="0.0.4",
+    version="0.0.5",
     description="A package for converting a pdf to textual data and interacting with a sqlite database",
     long_description=long_description,
     url="https://github.com/MatthewTe/pdf-parsing-package",
