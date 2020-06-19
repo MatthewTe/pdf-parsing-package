@@ -17,8 +17,8 @@ from difflib import Differ, SequenceMatcher
 # nltk.download('stopwords')
 
 # Importing the pdf api:
-# from . import pdf_parser as pparser # For Production
-import pdf_parser as pparser # For Development
+from . import pdf_parser as pparser # For Production
+# import pdf_parser as pparser # For Development
 
 # Importing database libraries:
 import sqlite3
