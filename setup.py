@@ -24,7 +24,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    package_dir = {'pdf_parsing_package'},
     install_requires=['PyPDF2', 'pdfplumber', 'pandas', 'nltk', 'textdistance', 'difflib']
 
 )
