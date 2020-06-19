@@ -24,6 +24,6 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    install_requires=['PyPDF2', 'pdfplumber', 'pandas', 'nltk', 'textdistance', 'difflib']
+    install_requires=['PyPDF2', 'pdfplumber', 'pandas', 'nltk', 'textdistance']
 
 )
